@@ -1,0 +1,97 @@
+#!/bin/bash
+
+POSITIONAL=()
+EXTRA=()
+
+build_environment () {
+  if ! docker_exists && ! docker_compose_exists; then
+    echo "Neither docker nor docker-compose seems to be installed. Please install them before continuing."
+  else
+    if ! docker_exists; then
+      echo "docker does not seem to be installed. Please install it before continuing."
+    fi
+    if ! docker_compose_exists; then
+      echo "docker-compose does not seem to be installed. Please install it before continuing."
+    fi
+  fi
+  if ! docker_exists || ! docker_compose_exists; then
+    exit 1;
+  fi
+  bash -c "$(docker_compose "build")"
+}
+
+docker_compose () {
+  echo "docker-compose $(join_by " " "$@")"
+}
+
+docker_exists () {
+  if hash docker 2>/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+docker_compose_exists () {
+  if hash docker-compose 2>/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+extras_as_string () {
+  join_by " " "${EXTRA[@]}"
+}
+
+join_by () {
+  local d=$1
+  shift
+  echo -n "$1"
+  shift
+  printf "%s" "${@/#/$d}"
+}
+
+print_usage () {
+echo "$(basename "$0") -- interface to dev tool functionality in a docker container
+
+Arguments:
+    -h              Show this help text
+    -b, --build     Build the docker image
+"
+}
+
+while [[ $# -gt 0 ]]
+  do
+  key="$1"
+
+  case $key in
+      -b|--build|build)
+        BUILD_ARG="$1"
+        shift
+      ;;
+
+      -h|--help)
+        print_usage
+        exit
+      ;;
+
+      *)
+        EXTRA+=("$1") # save it in an array for later
+        POSITIONAL+=("$1") # save it in an array for later
+        shift
+        ;;
+  esac
+done
+
+###########################
+#  Start main application #
+###########################
+
+if [ ! -z "$BUILD_ARG" ]; then
+  build_environment "$(extras_as_string)"
+else
+  echo "Sorry, but I'm not sure what you're wanting to do.  Please see docker-dev-tools -h for command options."
+  exit
+fi
+set -- "${POSITIONAL[@]}" # restore positional parameters

@@ -18,3 +18,5 @@ RUN npm install --unsafe-perm -g elm-analyse@0.16.4
 RUN npm install --unsafe-perm -g create-elm-app@3.2.1
 
 RUN npm -g install --unsafe-perm git+https://github.com/rogeriochaves/spades.git
+
+RUN npm install --unsafe-perm -g elm-oracle
